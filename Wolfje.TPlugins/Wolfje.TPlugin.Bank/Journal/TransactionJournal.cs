@@ -506,7 +506,7 @@ A Transaction has these following attributes:
 
             Console.WriteLine("seconomy xml: beginning Squash");
 
-            if (SEconomyPlugin.BackupCanRun == true) {
+            if (SEconomyPlugin.BackupCanRun) {
                 SEconomyPlugin.BackupCanRun = false;
                 responsibleForTurningBackupsBackOn = true;
             }

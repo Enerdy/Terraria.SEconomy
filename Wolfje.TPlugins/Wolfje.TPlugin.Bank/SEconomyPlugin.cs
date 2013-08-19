@@ -73,8 +73,8 @@ namespace Wolfje.Plugins.SEconomy {
 
         #region "Constructors"
 
-        public SEconomyPlugin(Main game)
-            : base(game) {
+        public SEconomyPlugin(Main Game)
+            : base(Game) {
             Order = 20000;
 
             if (!System.IO.Directory.Exists(Configuration.BaseDirectory)) {
@@ -107,27 +107,7 @@ namespace Wolfje.Plugins.SEconomy {
             }
         }
 
-        /// <summary>
-        /// Occurs when the server receives data from the client.
-        /// </summary>
-        void NetHooks_GetData(Hooks.GetDataEventArgs e) {
-
-            if (e.MsgID == PacketTypes.PlayerUpdate) {
-                byte playerIndex = e.Msg.readBuffer[e.Index];
-                PlayerControlFlags playerState = (PlayerControlFlags)e.Msg.readBuffer[e.Index + 1];
-                Economy.EconomyPlayer currentPlayer = GetEconomyPlayerSafe(playerIndex);
-
-                //The idea behind this logic is that IdleSince resets to now any time the server an action from the client.
-                //If the client never updates, or updates to 0 (Idle) then "IdleSince" never changes.
-                //When you want to get the amount of time the player has been idle, just subtract it from DateTime.Now
-                //And voila, you get a TimeSpan with how long the user has been idle for.
-                if (playerState != PlayerControlFlags.Idle) {
-                    currentPlayer.IdleSince = DateTime.Now;
-                }
-
-                currentPlayer.LastKnownState = playerState;
-            }
-        }
+      
 
         protected override void Dispose(bool disposing) {
 
@@ -182,15 +162,37 @@ namespace Wolfje.Plugins.SEconomy {
         #region "Event Handlers"
 
         /// <summary>
+        /// Occurs when the server receives data from the client.
+        /// </summary>
+        static void NetHooks_GetData(Hooks.GetDataEventArgs e) {
+
+            if (e.MsgID == PacketTypes.PlayerUpdate) {
+                byte playerIndex = e.Msg.readBuffer[e.Index];
+                PlayerControlFlags playerState = (PlayerControlFlags)e.Msg.readBuffer[e.Index + 1];
+                Economy.EconomyPlayer currentPlayer = GetEconomyPlayerSafe(playerIndex);
+
+                //The idea behind this logic is that IdleSince resets to now any time the server an action from the client.
+                //If the client never updates, or updates to 0 (Idle) then "IdleSince" never changes.
+                //When you want to get the amount of time the player has been idle, just subtract it from DateTime.Now
+                //And voila, you get a TimeSpan with how long the user has been idle for.
+                if (playerState != PlayerControlFlags.Idle) {
+                    currentPlayer.IdleSince = DateTime.Now;
+                }
+
+                currentPlayer.LastKnownState = playerState;
+            }
+        }
+
+        /// <summary>
         /// Occurs when the transaction journal needs to be backed up.
         /// </summary>
-        void JournalBackupTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
+        static void JournalBackupTimer_Elapsed(object Sender, System.Timers.ElapsedEventArgs e) {
             if (BackupCanRun) {
                 Journal.TransactionJournal.BackupJournalAsync();
             }
         }
 
-        void GameHooks_PostInitialize() {
+        static void GameHooks_PostInitialize() {
 
             //this is the pay run timer.
             //The timer event fires when it's time to do a pay run to the online players
@@ -210,8 +212,8 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Fires when a player's bank account is loaded from the database.
         /// </summary>
-        void EconomyPlayer_PlayerBankAccountLoaded(object sender, EventArgs e) {
-            Economy.EconomyPlayer ePlayer = sender as Economy.EconomyPlayer;
+        static void EconomyPlayer_PlayerBankAccountLoaded(object Sender, EventArgs e) {
+            Economy.EconomyPlayer ePlayer = Sender as Economy.EconomyPlayer;
 
             if (ePlayer.BankAccount != null) {
                 if (ePlayer.BankAccount.IsAccountEnabled) {
@@ -235,7 +237,7 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Occurs when a bank transfer completes.
         /// </summary>
-        void BankAccount_BankTransferCompleted(object sender, Journal.BankTransferEventArgs e) {
+        static void BankAccount_BankTransferCompleted(object Sender, Journal.BankTransferEventArgs e) {
             //this is pretty balls too, but will do for now.
 
             lock (__transferCompleteLock) {
@@ -289,7 +291,7 @@ namespace Wolfje.Plugins.SEconomy {
                             e.ReceiverAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}", moneyVerb, e.Amount.ToLongString()), Color.Orange);
                         }
                     }
-                } else if (e.TransferSucceeded == true) {
+                } else if (e.TransferSucceeded) {
                     TShockAPI.Log.ConsoleError("seconomy error: Bank account transfer completed without a receiver: ID " + e.TransactionID);
                 }
             }
@@ -298,8 +300,8 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Occurs when a player's bank account flags change
         /// </summary>
-        void BankAccount_BankAccountFlagsChanged(object sender, Journal.BankAccountChangedEventArgs e) {
-            Journal.XBankAccount bankAccount = sender as Journal.XBankAccount;
+        static void BankAccount_BankAccountFlagsChanged(object Sender, Journal.BankAccountChangedEventArgs e) {
+            Journal.XBankAccount bankAccount = Sender as Journal.XBankAccount;
             Economy.EconomyPlayer player = GetEconomyPlayerByBankAccountNameSafe(bankAccount.UserAccountName);
 
 
@@ -322,7 +324,7 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Fires when a player leaves.
         /// </summary>
-        void ServerHooks_Leave(int PlayerIndex) {
+        static void ServerHooks_Leave(int PlayerIndex) {
             Economy.EconomyPlayer ePlayer = GetEconomyPlayerSafe(PlayerIndex);
 
             //Lock players, deleting needs to block to avoid iterator crashes and race conditions
@@ -334,10 +336,10 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Fires when a player joins
         /// </summary>
-        void ServerHooks_Join(int playerId, System.ComponentModel.HandledEventArgs e) {
+        static void ServerHooks_Join(int PlayerId, System.ComponentModel.HandledEventArgs e) {
             //Add economy player wrapper to the static list of players.
             lock (__accountSafeLock) {
-                Economy.EconomyPlayer player = new Economy.EconomyPlayer(playerId);
+                Economy.EconomyPlayer player = new Economy.EconomyPlayer(PlayerId);
 
                 economyPlayers.Add(player);
 
@@ -353,7 +355,7 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Fires when a user logs in.
         /// </summary>
-        void PlayerHooks_PlayerLogin(TShockAPI.Hooks.PlayerLoginEventArgs e) {
+        static void PlayerHooks_PlayerLogin(TShockAPI.Hooks.PlayerLoginEventArgs e) {
             Economy.EconomyPlayer ePlayer = GetEconomyPlayerSafe(e.Player.Index);
 
             //Ensure a bank account for the economy player exists, and asynchronously load it.
@@ -364,12 +366,10 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Occurs when a player online payment needs to occur.
         /// </summary>
-        void PayRunTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
+        static void PayRunTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
             lock (__accountSafeLock) {
-
                 if (Configuration.PayIntervalMinutes > 0 && !string.IsNullOrEmpty(Configuration.IntervalPayAmount)) {
                     Money payAmount;
-
                     if (Money.TryParse(Configuration.IntervalPayAmount, out payAmount)) {
                         if (payAmount > 0) {
                             foreach (Economy.EconomyPlayer ep in economyPlayers) {
@@ -413,17 +413,17 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Gets an economy-enabled player by their index.  This method is thread-safe.
         /// </summary>
-        public static Economy.EconomyPlayer GetEconomyPlayerSafe(int id) {
+        public static Economy.EconomyPlayer GetEconomyPlayerSafe(int Id) {
             Economy.EconomyPlayer p = null;
 
-            if (id < 0) {
+            if (Id < 0) {
                 //make a shitty faux account with the world account so that bank works from the console.
                 p = new Economy.EconomyPlayer(-1);
                 p.BankAccount = SEconomyPlugin.WorldAccount;
             } else {
                 lock (__accountSafeLock) {
                     foreach (Economy.EconomyPlayer ep in economyPlayers) {
-                        if (ep.Index == id) {
+                        if (ep.Index == Id) {
                             p = ep;
                         }
                     }
@@ -461,26 +461,26 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Reflects on a private method.  Can remove this if TShock opens up a bit more of their API publicly
         /// </summary>
-        public static T CallPrivateMethod<T>(Type type, bool staticMember, string name, params object[] param) {
+        public static T CallPrivateMethod<T>(Type type, bool StaticMember, string Name, params object[] Param) {
             BindingFlags flags = BindingFlags.NonPublic;
-            if (staticMember) {
+            if (StaticMember) {
                 flags |= BindingFlags.Static;
             } else {
                 flags |= BindingFlags.Instance;
             }
-            MethodInfo method = type.GetMethod(name, flags);
-            return (T)method.Invoke(staticMember ? null : type, param);
+            MethodInfo method = type.GetMethod(Name, flags);
+            return (T)method.Invoke(StaticMember ? null : type, Param);
         }
 
         /// <summary>
         /// Reflects on a private instance member of a class.  Can remove this if TShock opens up a bit more of their API publicly
         /// </summary>
-        public static T GetPrivateField<T>(Type type, object instance, string name, params object[] param) {
+        public static T GetPrivateField<T>(Type type, object Instance, string Name, params object[] Param) {
             BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
 
-            FieldInfo field = type.GetField(name, flags) as FieldInfo;
+            FieldInfo field = type.GetField(Name, flags) as FieldInfo;
 
-            return (T)field.GetValue(instance);
+            return (T)field.GetValue(Instance);
         }
 
         public static void FillWithSpaces(ref string Input) {
