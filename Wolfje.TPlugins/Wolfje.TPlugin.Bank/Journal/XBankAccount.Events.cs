@@ -82,6 +82,7 @@ namespace Wolfje.Plugins.SEconomy.Journal
         public XBankAccount SenderAccount { get; set; }
         public string TransactionID { get; set; }
         public Money Amount { get; set; }
+        public Exception Exception { get; set; }
         public Journal.BankAccountTransferOptions TransferOptions { get; set; }
     }
 }

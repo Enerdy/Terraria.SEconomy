@@ -8,6 +8,8 @@ namespace Wolfje.Plugins.SEconomy {
         public bool UseQuadrantNotation = true;
         public string MoneyName = "coin";
         public string MoneyNamePlural = "coins";
+        public string SingularDisplayFormat = "N";
+        public string SingularDisplayCulture = "en-US";
 
         public string Quadrant1FullName = "Copper";
         public string Quadrant1ShortName = "copper";

@@ -157,16 +157,15 @@ namespace Wolfje.Plugins.SEconomy {
             lock (__staticLock) {
 
                 StringBuilder sb = new StringBuilder();
+                Money moneyCopy = this;
+
+                //Negative balances still need to display like they are positives
+                if (moneyCopy < 0) {
+                    sb.Append("-");
+                    moneyCopy = moneyCopy * (-1);
+                }
 
                 if (SEconomyPlugin.Configuration.MoneyConfiguration.UseQuadrantNotation) {
-                    Money moneyCopy = this;
-
-                    //Negative balances still need to display like they are positives
-                    if (moneyCopy < 0) {
-                        sb.Append("-");
-                        moneyCopy = moneyCopy * (-1);
-                    }
-
                     if (moneyCopy.Platinum > 0) {
                         sb.AppendFormat("{0}{1}", moneyCopy.Platinum, SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant4Abbreviation);
                     }
@@ -185,7 +184,7 @@ namespace Wolfje.Plugins.SEconomy {
 
                 } else {
                     //Used in singular format: produces something like "1 coin", or "612 coins."
-                    sb.AppendFormat("{0} {1}", this.Value, this.Value > 1 ? SEconomyPlugin.Configuration.MoneyConfiguration.MoneyNamePlural : SEconomyPlugin.Configuration.MoneyConfiguration.MoneyName);
+                    sb.AppendFormat("{0} {1}", this.Value.ToString(SEconomyPlugin.Configuration.MoneyConfiguration.SingularDisplayFormat, new System.Globalization.CultureInfo(SEconomyPlugin.Configuration.MoneyConfiguration.SingularDisplayCulture)), this.Value > 1 ? SEconomyPlugin.Configuration.MoneyConfiguration.MoneyNamePlural : SEconomyPlugin.Configuration.MoneyConfiguration.MoneyName);
                 }
 
                 return sb.ToString();
@@ -228,8 +227,10 @@ namespace Wolfje.Plugins.SEconomy {
                     }
                 } else {
                     //Used in singular format: produces something like "1 coin", or "612 coins."
-                    sb.AppendFormat("{0} {1}", this.Value, this.Value > 1 ? SEconomyPlugin.Configuration.MoneyConfiguration.MoneyNamePlural : SEconomyPlugin.Configuration.MoneyConfiguration.MoneyName);
+                    sb.AppendFormat("{0} {1}", this.Value.ToString(SEconomyPlugin.Configuration.MoneyConfiguration.SingularDisplayFormat, new System.Globalization.CultureInfo(SEconomyPlugin.Configuration.MoneyConfiguration.SingularDisplayCulture)), 
+                        this.Value > 1 ? SEconomyPlugin.Configuration.MoneyConfiguration.MoneyNamePlural.ToLowerInvariant() : SEconomyPlugin.Configuration.MoneyConfiguration.MoneyName.ToLowerInvariant());
                 }
+
                 return sb.ToString();
             }
         }
@@ -266,47 +267,42 @@ namespace Wolfje.Plugins.SEconomy {
             lock (__staticLock) {
                 long totalMoney = 0;
 
-                if (SEconomyPlugin.Configuration.MoneyConfiguration.UseQuadrantNotation) {
+                if (!string.IsNullOrWhiteSpace(MoneyRepresentation) && new Regex(string.Format(@"{0}|{1}|{2}|{3}", SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant4Abbreviation,
+                        SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant3Abbreviation,
+                        SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant2Abbreviation,
+                        SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant1Abbreviation)).IsMatch(MoneyRepresentation)) {
+                    Match moneyMatch = moneyRegex.Match(MoneyRepresentation);
+                    long plat = 0, gold = 0, silver = 0, copper = 0;
+                    string signedness = "";
 
-                    if (!string.IsNullOrWhiteSpace(MoneyRepresentation) && new Regex(string.Format(@"{0}|{1}|{2}|{3}", SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant4Abbreviation,
-                            SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant3Abbreviation,
-                            SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant2Abbreviation,
-                            SEconomyPlugin.Configuration.MoneyConfiguration.Quadrant1Abbreviation)).IsMatch(MoneyRepresentation)) {
-                        Match moneyMatch = moneyRegex.Match(MoneyRepresentation);
-                        long plat = 0, gold = 0, silver = 0, copper = 0;
-                        string signedness = "";
+                    if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[1].Value))
+                        signedness = moneyMatch.Groups[1].Value;
 
-                        if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[1].Value))
-                            signedness = moneyMatch.Groups[1].Value;
+                    if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[2].Value))
+                        plat = long.Parse(moneyMatch.Groups[3].Value);
 
-                        if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[2].Value))
-                            plat = long.Parse(moneyMatch.Groups[3].Value);
+                    if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[4].Value))
+                        gold = long.Parse(moneyMatch.Groups[5].Value);
 
-                        if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[4].Value))
-                            gold = long.Parse(moneyMatch.Groups[5].Value);
+                    if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[6].Value))
+                        silver = long.Parse(moneyMatch.Groups[7].Value);
 
-                        if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[6].Value))
-                            silver = long.Parse(moneyMatch.Groups[7].Value);
+                    if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[8].Value))
+                        copper = long.Parse(moneyMatch.Groups[9].Value);
 
-                        if (!string.IsNullOrWhiteSpace(moneyMatch.Groups[8].Value))
-                            copper = long.Parse(moneyMatch.Groups[9].Value);
+                    totalMoney += plat * ONE_PLATINUM;
+                    totalMoney += gold * ONE_GOLD;
+                    totalMoney += silver * ONE_SILVER;
+                    totalMoney += copper;
 
-                        totalMoney += plat * ONE_PLATINUM;
-                        totalMoney += gold * ONE_GOLD;
-                        totalMoney += silver * ONE_SILVER;
-                        totalMoney += copper;
-
-                        //you can specify a minus at the start to indicate a negative amount.
-                        if (!string.IsNullOrWhiteSpace(signedness)) {
-                            totalMoney = -totalMoney;
-                        }
-                    } else {
-                        //Attempt a plain conversion from a whole integer
-                        long.TryParse(MoneyRepresentation, out totalMoney);
+                    //you can specify a minus at the start to indicate a negative amount.
+                    if (!string.IsNullOrWhiteSpace(signedness)) {
+                        totalMoney = -totalMoney;
                     }
                 } else {
                     if (numberRegex.IsMatch(MoneyRepresentation)) {
                         Match numberMatch = numberRegex.Match(MoneyRepresentation);
+
                         if (numberMatch.Groups.Count > 1) {
                             //Attempt a plain conversion from a whole integer
                             long.TryParse(numberMatch.Groups[1].Value, out totalMoney);

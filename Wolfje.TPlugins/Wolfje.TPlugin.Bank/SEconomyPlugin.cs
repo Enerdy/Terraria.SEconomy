@@ -59,7 +59,7 @@ namespace Wolfje.Plugins.SEconomy {
 
         public override string Name {
             get {
-                return "SEconomy (Milestone 1 BETA) Update 3";
+                return "SEconomy (Milestone 1 BETA) Update " + this.Version.Build;
             }
         }
 
@@ -155,11 +155,26 @@ namespace Wolfje.Plugins.SEconomy {
             JournalBackupTimer = new System.Timers.Timer(Configuration.JournalBackupMinutes * 60000);
             JournalBackupTimer.Elapsed += JournalBackupTimer_Elapsed;
             JournalBackupTimer.Start();
+
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
         }
+
+    
 
         
 
         #region "Event Handlers"
+
+        /// <summary>
+        /// Occurs when an exception happens on a task and is not observed.  This is to prevent task exceptions ripping down the entire appdomain and just being generally shit for everyone
+        /// </summary>
+        static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e) {
+            if (!e.Observed) {
+                TShockAPI.Log.ConsoleError("seconomy async: error occurred on a task thread: " + e.Exception.Flatten().ToString());
+
+                e.SetObserved();
+            }
+        }
 
         /// <summary>
         /// Occurs when the server receives data from the client.
@@ -171,7 +186,7 @@ namespace Wolfje.Plugins.SEconomy {
                 PlayerControlFlags playerState = (PlayerControlFlags)e.Msg.readBuffer[e.Index + 1];
                 Economy.EconomyPlayer currentPlayer = GetEconomyPlayerSafe(playerIndex);
 
-                //The idea behind this logic is that IdleSince resets to now any time the server an action from the client.
+                //The idea behind this logic is that IdleSince resets to now any time the serbver an action from the client.
                 //If the client never updates, or updates to 0 (Idle) then "IdleSince" never changes.
                 //When you want to get the amount of time the player has been idle, just subtract it from DateTime.Now
                 //And voila, you get a TimeSpan with how long the user has been idle for.

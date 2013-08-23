@@ -44,6 +44,15 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule.JScript {
                 return Money.Parse(moneyString.ToString());
             }));
 
+            ///function seconomy_valid_money(moneyString : string) : boolean
+            ///
+            ///Returns true if a supplied money value is valid and is parsable or not.
+            CmdAliasPlugin.scriptEngine.SetFunction("seconomy_valid_money", new Func<object, bool>((moneyString) => {
+                Money _money;
+                return Money.TryParse(moneyString.ToString(), out _money);
+            }));
+
+
 
             CmdAliasPlugin.scriptEngine.SetFunction("seconomy_get_account", new Func<object, Journal.XBankAccount>((accountName) => {
 
