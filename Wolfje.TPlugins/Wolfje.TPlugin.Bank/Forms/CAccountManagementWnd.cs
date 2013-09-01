@@ -231,8 +231,8 @@ namespace Wolfje.Plugins.SEconomy.Forms {
                         selectedUserAccount.SyncBalanceAsync().ContinueWith((t) => {
                             AccountSummary selectedSummary = accList.FirstOrDefault(i => i.Value == selectedUserAccount.BankAccountK);
 
-                            if (summary != null) {
-                                summary.Balance = selectedUserAccount.Balance;
+                            if (selectedSummary != null) {
+                                selectedSummary.Balance = selectedUserAccount.Balance;
                             }
                         });
 

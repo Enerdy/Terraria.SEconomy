@@ -50,7 +50,6 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <WarningLevel>4</WarningLevel>
     <Optimize>false</Optimize>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -94,8 +93,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChatCommands.cs" />
-    <Compile Include="Configuration\Configuration.cs" />
+    <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\MoneyProperties.cs" />
+    <Compile Include="Configuration\WorldConfiguration\WorldConfig.cs" />
     <Compile Include="Economy\EconomyPlayer.cs" />
     <Compile Include="Enumerations.cs" />
     <Compile Include="Forms\CAccountManagementWnd.cs">
@@ -107,6 +107,11 @@
     <Compile Include="Forms\Form.Extensions.cs" />
     <Compile Include="Journal\XBankAccount.Transfer.cs" />
     <Compile Include="Economy\Money.cs" />
+    <Compile Include="Packets\DamageNPC.cs" />
+    <Compile Include="Packets\PacketMarshal.cs" />
+    <Compile Include="Packets\StrikeNPC.cs" />
+    <Compile Include="Packets\TerrariaPacket.cs" />
+    <Compile Include="Packets\UpdateNPC.cs" />
     <Compile Include="Performance\Profiler.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -120,6 +125,7 @@
     <Compile Include="Journal\TransactionJournal.cs" />
     <Compile Include="Journal\XBankAccount.cs" />
     <Compile Include="Journal\XTransaction.cs" />
+    <Compile Include="WorldEconomy\WorldEconomy.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Permissions.txt" />
@@ -137,6 +143,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Journal\TransactionJournal.CachedTransaction.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -160,4 +167,5 @@
       </Properties>
     </MonoDevelop>
   </ProjectExtensions>
+  <ItemGroup />
 </Project>

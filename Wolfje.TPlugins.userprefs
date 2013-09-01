@@ -1,17 +1,23 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Wolfje.TPlugins/Wolfje.TPlugin.Bank/Journal/TransactionJournal.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wolfje.TPlugins/Wolfje.TPlugin.Bank/WorldEconomy/WorldEconomy.cs">
     <Files>
-      <File FileName="Wolfje.TPlugins/Wolfje.TPlugin.Bank/Journal/TransactionJournal.cs" Line="568" Column="33" />
+      <File FileName="Wolfje.TPlugins/Wolfje.TPlugin.Bank/Journal/TransactionJournal.cs" Line="502" Column="49" />
+      <File FileName="Wolfje.TPlugins/Wolfje.TPlugin.Bank/Journal/XBankAccount.UncommittedFunds.cs" Line="1" Column="1" />
+      <File FileName="Wolfje.Plugins.SEconomy.VaultExModule/VaultEx.cs" Line="1" Column="1" />
+      <File FileName="Wolfje.TPlugins/Wolfje.TPlugin.Bank/WorldEconomy/WorldEconomy.cs" Line="1" Column="14" />
+      <File FileName="Wolfje.TPlugins/Wolfje.TPlugin.Bank/SEconomyPlugin.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="Wolfje.Plugins.SEconomy" expanded="True">
-            <Node name="Journal" expanded="True">
-              <Node name="TransactionJournal.cs" selected="True" />
+            <Node name="Journal" expanded="True" />
+            <Node name="WorldEconomy" expanded="True">
+              <Node name="WorldEconomy.cs" selected="True" />
             </Node>
           </Node>
+          <Node name="Wolfje.Plugins.SEconomy.VaultExModule" expanded="True" />
         </State>
       </Pad>
     </Pads>

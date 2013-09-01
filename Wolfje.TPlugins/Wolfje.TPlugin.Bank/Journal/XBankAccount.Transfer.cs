@@ -70,26 +70,27 @@ namespace Wolfje.Plugins.SEconomy.Journal {
         /// <summary>
         /// Asynchronously transfers to another account.
         /// </summary>
-        public Task<BankTransferEventArgs> TransferToAsync(XBankAccount ToAccount, Money Amount, BankAccountTransferOptions Options, string Message = "") {
+        public Task<BankTransferEventArgs> TransferToAsync(XBankAccount ToAccount, Money Amount, BankAccountTransferOptions Options, string TransactionMessage, string JournalMessage) {
             Guid profile = SEconomyPlugin.Profiler.Enter(string.Format("transferAsync: {0} to {1}", this.UserAccountName, ToAccount.UserAccountName));
             return Task.Factory.StartNew<BankTransferEventArgs>(() => {
-                BankTransferEventArgs args = TransferTo(ToAccount, Amount, Options, UseProfiler: false, Message: Message);
+                BankTransferEventArgs args = TransferTo(ToAccount, Amount, Options, TransactionMessage, JournalMessage);
                 return args;
             }).ContinueWith((task) => {
                 SEconomyPlugin.Profiler.ExitLog(profile);
                 return task.Result;
             });
         }
+
 
         /// <summary>
         /// Asynchronously transfers to another account.
         /// </summary>
-        public Task<BankTransferEventArgs> TransferToAsync(int Index, Money Amount, BankAccountTransferOptions Options, string Message = "") {
+        public Task<BankTransferEventArgs> TransferToAsync(int Index, Money Amount, BankAccountTransferOptions Options, string TransactionMessage, string JournalMessage) {
             Economy.EconomyPlayer ePlayer = SEconomyPlugin.GetEconomyPlayerSafe(Index);
 
             Guid profile = SEconomyPlugin.Profiler.Enter(string.Format("transferAsync: {0} to {1}", this.UserAccountName, ePlayer.BankAccount != null ? ePlayer.BankAccount.UserAccountName : "Unknown"));
             return Task.Factory.StartNew<BankTransferEventArgs>(() => {
-                BankTransferEventArgs args = TransferTo(ePlayer.BankAccount, Amount, Options, UseProfiler: false, Message: Message);
+                BankTransferEventArgs args = TransferTo(ePlayer.BankAccount, Amount, Options, TransactionMessage, JournalMessage);
                 return args;
             }).ContinueWith((task) => {
                 SEconomyPlugin.Profiler.ExitLog(profile);
@@ -98,19 +99,9 @@ namespace Wolfje.Plugins.SEconomy.Journal {
         }
 
         /// <summary>
-        /// Transfers money from this player to the destination account.  If negative, takes money from the destionation account into this account.
-        /// </summary>
-        public BankTransferEventArgs TransferTo(int Index, Money Amount, Journal.BankAccountTransferOptions Options, string Message = "") {
-            Economy.EconomyPlayer ePlayer = SEconomyPlugin.GetEconomyPlayerSafe(Index);
-
-            return TransferTo(ePlayer.BankAccount, Amount, Options, Message: Message);
-        }
-
-
-        /// <summary>
         /// Transfers money from this account to the destination account, if negative, takes money from the destination account into this account.
         /// </summary>
-        public BankTransferEventArgs TransferTo(XBankAccount ToAccount, Money Amount, BankAccountTransferOptions Options, bool UseProfiler = true, string Message = "") {
+        public BankTransferEventArgs TransferTo(XBankAccount ToAccount, Money Amount, BankAccountTransferOptions Options, string TransactionMessage, string JournalMessage) {
             BankTransferEventArgs args = new BankTransferEventArgs();
             Guid profile = Guid.Empty;
 
@@ -119,7 +110,7 @@ namespace Wolfje.Plugins.SEconomy.Journal {
                   
                     if (ToAccount != null) {
                         if (TransferMaySucceed(this, ToAccount, Amount, Options)) {
-                            if (UseProfiler) {
+                            if (SEconomyPlugin.Configuration.EnableProfiler) {
                                 profile = SEconomyPlugin.Profiler.Enter(string.Format("transfer: {0} to {1}", !string.IsNullOrEmpty(this.UserAccountName) ? this.UserAccountName : "Unknown", ToAccount != null && !string.IsNullOrEmpty(ToAccount.UserAccountName) ? ToAccount.UserAccountName : "Unknown"));
                             }
                             args.Amount = Amount;
@@ -127,12 +118,13 @@ namespace Wolfje.Plugins.SEconomy.Journal {
                             args.ReceiverAccount = ToAccount;
                             args.TransferOptions = Options;
                             args.TransferSucceeded = false;
+                            args.TransactionMessage = TransactionMessage;
 
                             //insert the source negative transaction
-                            XTransaction sourceTran = BeginSourceTransaction(Amount, Message);
+                            XTransaction sourceTran = BeginSourceTransaction(Amount, JournalMessage);
                             if (sourceTran != null && !string.IsNullOrEmpty(sourceTran.BankAccountTransactionK)) {
                                 //insert the destination inverse transaction
-                                XTransaction destTran = FinishEndTransaction(sourceTran.BankAccountTransactionK, ToAccount, Amount, Message);
+                                XTransaction destTran = FinishEndTransaction(sourceTran.BankAccountTransactionK, ToAccount, Amount, JournalMessage);
 
                                 if (destTran != null && !string.IsNullOrEmpty(destTran.BankAccountTransactionK)) {
                                     //perform the double-entry binding
@@ -170,7 +162,7 @@ namespace Wolfje.Plugins.SEconomy.Journal {
                     //raise the transfer event
                     OnBankTransferComplete(args);
 
-                    if (UseProfiler) {
+                    if (SEconomyPlugin.Configuration.EnableProfiler) {
                         SEconomyPlugin.Profiler.ExitLog(profile);
                     }
                 }

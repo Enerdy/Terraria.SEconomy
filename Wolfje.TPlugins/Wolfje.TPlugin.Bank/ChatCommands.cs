@@ -115,21 +115,21 @@ namespace Wolfje.Plugins.SEconomy {
                 if (args.Player.Group.HasPermission("bank.savejournal")) {
                     args.Player.SendInfoMessage("seconomy xml: Backing up transaction journal.");
 
-                    Journal.TransactionJournal.SaveXml(Configuration.JournalPath);
+                    Journal.TransactionJournal.SaveXml(Config.JournalPath);
                 }
 
             } else if (args.Parameters[0].Equals("loadjournal")) {
                 if (args.Player.Group.HasPermission("bank.loadjournal")) {
                     args.Player.SendInfoMessage("seconomy xml: Loading transaction journal from file");
 
-                    Journal.TransactionJournal.LoadFromXmlFile(Configuration.JournalPath);
+                    Journal.TransactionJournal.LoadFromXmlFile(Config.JournalPath);
                 }
 
             } else if (args.Parameters[0].Equals("squashjournal", StringComparison.CurrentCultureIgnoreCase)) {
                 if (args.Player.Group.HasPermission("bank.squashjournal")) {
                     Guid p = SEconomyPlugin.Profiler.Enter("Squash journal");
                     Journal.TransactionJournal.SquashJournalAsync().ContinueWith((task) => {
-                        Journal.TransactionJournal.SaveXml(Configuration.JournalPath);
+                        Journal.TransactionJournal.SaveXml(Config.JournalPath);
 
                         SEconomyPlugin.Profiler.ExitLog(p);
                     });
@@ -195,7 +195,7 @@ namespace Wolfje.Plugins.SEconomy {
                             if (Money.TryParse(args.Parameters[2], out amount)) {
 
                                 //Instruct the world bank to give the player money.
-                                caller.BankAccount.TransferTo(selectedPlayer.BankAccount, amount, Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.AnnounceToSender | Journal.BankAccountTransferOptions.IsPlayerToPlayerTransfer, Message: string.Format("SE: tfr: {0} to {1} for {2}", caller.TSPlayer.Name, selectedPlayer.TSPlayer.Name, amount.ToString()));
+                                caller.BankAccount.TransferTo(selectedPlayer.BankAccount, amount, Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.AnnounceToSender | Journal.BankAccountTransferOptions.IsPlayerToPlayerTransfer, "", string.Format("SE: tfr: {0} to {1} for {2}", caller.TSPlayer.Name, selectedPlayer.TSPlayer.Name, amount.ToString()));
                             } else {
                                 args.Player.SendErrorMessageFormat("bank give: \"{0}\" isn't a valid amount of money.", args.Parameters[2]);
                             }
@@ -228,7 +228,7 @@ namespace Wolfje.Plugins.SEconomy {
                                 }
 
                                 //Instruct the world bank to give the player money.
-                                SEconomyPlugin.WorldAccount.TransferTo(selectedPlayer.BankAccount, amount, Journal.BankAccountTransferOptions.AnnounceToReceiver, Message: string.Format("SE: pay: {0} to {1} ", amount.ToString(), selectedPlayer.TSPlayer.Name));
+                                SEconomyPlugin.WorldAccount.TransferTo(selectedPlayer.BankAccount, amount, Journal.BankAccountTransferOptions.AnnounceToReceiver, "", string.Format("SE: pay: {0} to {1} ", amount.ToString(), selectedPlayer.TSPlayer.Name));
                             } else {
                                 args.Player.SendErrorMessageFormat("bank give: \"{0}\" isn't a valid amount of money.", args.Parameters[2]);
                             }

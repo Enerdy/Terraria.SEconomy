@@ -228,8 +228,14 @@ namespace Wolfje.Plugins.SEconomy {
                 } else {
                     //Used in singular format: produces something like "1 coin", or "612 coins."
                     sb.AppendFormat("{0} {1}", this.Value.ToString(SEconomyPlugin.Configuration.MoneyConfiguration.SingularDisplayFormat, new System.Globalization.CultureInfo(SEconomyPlugin.Configuration.MoneyConfiguration.SingularDisplayCulture)), 
-                        this.Value > 1 ? SEconomyPlugin.Configuration.MoneyConfiguration.MoneyNamePlural.ToLowerInvariant() : SEconomyPlugin.Configuration.MoneyConfiguration.MoneyName.ToLowerInvariant());
+                        this.Value == 1 ? SEconomyPlugin.Configuration.MoneyConfiguration.MoneyName.ToLowerInvariant() : SEconomyPlugin.Configuration.MoneyConfiguration.MoneyNamePlural.ToLowerInvariant());
+
+                    if (!ShowNegativeSign) {
+                        sb = sb.Replace("-", "");
+                    }
                 }
+                
+
 
                 return sb.ToString();
             }

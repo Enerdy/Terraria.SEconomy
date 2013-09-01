@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wolfje.Plugins.SEconomy", "Wolfje.TPlugins\Wolfje.TPlugin.Bank\Wolfje.Plugins.SEconomy.csproj", "{27DD3A5C-B30A-4F00-8A3A-E178F7E3F7E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wolfje.Plugins.SEconomy.VaultExModule", "Wolfje.Plugins.SEconomy.VaultExModule\Wolfje.Plugins.SEconomy.VaultExModule.csproj", "{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wolfje.Plugins.SEconomy.CmdAliasModule", "Wolfje.Plugins.SEconomy.CmdAliasModule\Wolfje.Plugins.SEconomy.CmdAliasModule.csproj", "{33D4B813-DB75-4201-8F7C-E3BA51C9FBC2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wolfje.Plugins.SEconomy.GamblingModule", "Wolfje.Plugins.SEconomy.GamblingModule\Wolfje.Plugins.SEconomy.GamblingModule.csproj", "{AE63BBBC-5E99-4BAA-B54A-AAADBD54B939}"
@@ -31,16 +29,6 @@ Global
 		{27DD3A5C-B30A-4F00-8A3A-E178F7E3F7E5}.Release|Mixed Platforms.Build.0 = Release|x86
 		{27DD3A5C-B30A-4F00-8A3A-E178F7E3F7E5}.Release|x86.ActiveCfg = Release|x86
 		{27DD3A5C-B30A-4F00-8A3A-E178F7E3F7E5}.Release|x86.Build.0 = Release|x86
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{29AEEF46-4CD8-4E81-881F-3E2D50E4F70C}.Release|x86.ActiveCfg = Release|Any CPU
 		{33D4B813-DB75-4201-8F7C-E3BA51C9FBC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{33D4B813-DB75-4201-8F7C-E3BA51C9FBC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33D4B813-DB75-4201-8F7C-E3BA51C9FBC2}.Debug|Mixed Platforms.ActiveCfg = Debug|x86

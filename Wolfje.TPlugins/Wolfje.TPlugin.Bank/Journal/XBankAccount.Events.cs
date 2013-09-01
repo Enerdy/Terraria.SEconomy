@@ -84,5 +84,6 @@ namespace Wolfje.Plugins.SEconomy.Journal
         public Money Amount { get; set; }
         public Exception Exception { get; set; }
         public Journal.BankAccountTransferOptions TransferOptions { get; set; }
+        public string TransactionMessage { get; set; }
     }
 }

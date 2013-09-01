@@ -27,21 +27,26 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule.JScript {
             ///
             ///Asynchronously transfers money using SEconomy, then calls back to the JS function specified by completedCallback
             CmdAliasPlugin.scriptEngine.SetFunction("seconomy_transfer_async", new TransferAsyncDelegate((from, to, amount, msg, func) => {
-                from.TransferToAsync(to, amount, Journal.BankAccountTransferOptions.AnnounceToSender, Message: msg).ContinueWith((task) => {
+                from.TransferToAsync(to, amount, Journal.BankAccountTransferOptions.AnnounceToSender, msg, msg).ContinueWith((task) => {
                     //callback to the JS function with the result of the transfer
                     CmdAliasPlugin.scriptEngine.CallFunction(func, task.Result);
                 });
             }));
 
             CmdAliasPlugin.scriptEngine.SetFunction("seconomy_pay_async", new TransferAsyncDelegate((from, to, amount, msg, func) => {
-                from.TransferToAsync(to, amount, Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.AnnounceToSender | Journal.BankAccountTransferOptions.IsPayment, Message: msg).ContinueWith((task) => {
+                from.TransferToAsync(to, amount, Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.AnnounceToSender | Journal.BankAccountTransferOptions.IsPayment, msg, msg).ContinueWith((task) => {
                     //callback to the JS function with the result of the transfer
                     CmdAliasPlugin.scriptEngine.CallFunction(func, task.Result);
                 });
             }));
 
             CmdAliasPlugin.scriptEngine.SetFunction("seconomy_parse_money", new Func<object, Money>((moneyString) => {
-                return Money.Parse(moneyString.ToString());
+                try {
+                    return Money.Parse(moneyString.ToString());
+                }
+                catch {
+                    return 0;
+                }
             }));
 
             ///function seconomy_valid_money(moneyString : string) : boolean
@@ -55,13 +60,22 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule.JScript {
 
 
             CmdAliasPlugin.scriptEngine.SetFunction("seconomy_get_account", new Func<object, Journal.XBankAccount>((accountName) => {
+                Journal.XBankAccount bankAccount = null;
 
                 if (accountName is TShockAPI.TSPlayer) {
-                    return SEconomyPlugin.GetEconomyPlayerSafe((accountName as TShockAPI.TSPlayer).Name).BankAccount;
-                } else {
-                    return SEconomyPlugin.GetEconomyPlayerSafe(accountName.ToString()).BankAccount;
+                    Economy.EconomyPlayer ePlayer = SEconomyPlugin.GetEconomyPlayerSafe((accountName as TShockAPI.TSPlayer).Name);
+                    if ( ePlayer != null ) {
+                        bankAccount = ePlayer.BankAccount;
+                    }
+                    
+                } else if ( accountName != null )  {
+                    Economy.EconomyPlayer ePlayer = SEconomyPlugin.GetEconomyPlayerSafe(accountName.ToString());
+                     if ( ePlayer != null ) {
+                        bankAccount = ePlayer.BankAccount;
+                    }
                 }
 
+                return bankAccount;
             }));
 
 
@@ -92,8 +106,25 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule.JScript {
             ///function get_player(playerName : string) : TShockAPI.TSPlayer
             ///
             ///Returns a TSPlayer by their characterName.  Returns undefined if the player isn't found or is offline.
-            CmdAliasPlugin.scriptEngine.SetFunction("get_player", new Func<string, TShockAPI.TSPlayer>((name) => {
-                return TShockAPI.TShock.Players.FirstOrDefault(i => i.Name == name);
+            CmdAliasPlugin.scriptEngine.SetFunction("get_player", new Func<object, TShockAPI.TSPlayer>((name) => {
+                TShockAPI.TSPlayer returnPlayer = null;
+
+                if (name != null) {
+                    if (name is string) {
+                        returnPlayer = TShockAPI.TShock.Players.FirstOrDefault(i => i != null && i.Name == name.ToString());
+                        if (returnPlayer == null) {
+                            returnPlayer = TShockAPI.TShock.Players.FirstOrDefault(i => i != null && i.UserAccountName == name.ToString());
+                        }
+                    } else if (name is Journal.XBankAccount) {
+                        Journal.XBankAccount acct = name as Journal.XBankAccount;
+
+                        if (acct.Owner != null) {
+                            returnPlayer = acct.Owner.TSPlayer;
+                        }
+                    }
+                }
+
+                return returnPlayer;
             }));
 
             ///function random(from : integer, to : integer) : integer

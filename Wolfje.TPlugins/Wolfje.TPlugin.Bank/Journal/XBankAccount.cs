@@ -277,9 +277,6 @@ namespace Wolfje.Plugins.SEconomy.Journal {
                 SEconomyPlugin.Profiler.ExitLog(p);
             });
         }
-
-      
-
     }
 }
 

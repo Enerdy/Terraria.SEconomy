@@ -81,6 +81,7 @@ namespace Wolfje.Plugins.SEconomy.VaultExModule {
         /// Occurs when the server sends data.
         /// </summary>
         void NetHooks_SendData(Hooks.SendDataEventArgs e) {
+            
             if (e.MsgID == PacketTypes.NpcStrike) {
                 NPC npc = Main.npc[e.number];
 
@@ -111,7 +112,15 @@ namespace Wolfje.Plugins.SEconomy.VaultExModule {
                                                 if (reward.Value < 0) {
                                                     TShockAPI.Log.ConsoleError(string.Format("Reward for {0} is {1}.", ePlayer.TSPlayer.Name, reward.Value));
                                                 } else {
-                                                    SEconomyPlugin.WorldAccount.TransferToAsync(ePlayer.BankAccount, reward.Value, options, string.Format("VX: {0} reward for boss {1}",ePlayer.TSPlayer.Name, npc.name) );
+
+                                                    Journal.TransactionJournal.AddUncommittedFund(new Journal.UncommittedFund() {
+                                                        SourceBankAccountK = SEconomyPlugin.WorldAccount.BankAccountK,
+                                                        DestinationBankAccountK = ePlayer.BankAccount.BankAccountK,
+                                                        Message = npc.name,
+                                                        Options = options,
+                                                        Amount = reward.Value
+                                                    });
+                                                    //SEconomyPlugin.WorldAccount.TransferToAsync(ePlayer.BankAccount, reward.Value, options, npc.name, string.Format("VX: {0} reward for boss {1}",ePlayer.TSPlayer.Name, npc.name) );
                                                 }
                                             }
                                         }
@@ -167,7 +176,17 @@ namespace Wolfje.Plugins.SEconomy.VaultExModule {
                                     TShockAPI.Log.ConsoleError(string.Format("Reward for {0} is {1}.", epl.TSPlayer.Name, rewardAmt));
                                 } else {
 
-                                    SEconomyPlugin.WorldAccount.TransferToAsync(i, rewardAmt, options, string.Format("VX: {0} reward for {1}", epl.TSPlayer.Name, npc.name)); 
+                                    if (epl.BankAccount != null) {
+                                        Journal.TransactionJournal.AddUncommittedFund(new Journal.UncommittedFund() {
+                                            SourceBankAccountK = SEconomyPlugin.WorldAccount.BankAccountK,
+                                            DestinationBankAccountK = epl.BankAccount.BankAccountK,
+                                            Message = npc.name,
+                                            Options = options,
+                                            Amount = rewardAmt
+                                        });
+                                    }
+
+                                   // SEconomyPlugin.WorldAccount.TransferToAsync(i, rewardAmt, options, "for killing " + npc.name, string.Format("VX: {0} reward for {1}", epl.TSPlayer.Name, npc.name)); 
                                 }
 
                             }
@@ -199,10 +218,8 @@ namespace Wolfje.Plugins.SEconomy.VaultExModule {
                             if (eKiller != null && eKiller.BankAccount != null) {
                                 Journal.BankAccountTransferOptions options = Journal.BankAccountTransferOptions.MoneyFromPvP | Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.AnnounceToSender;
 
-                              //  killer.ChangeMoney(penaltyAmmount, MoneyEventFlags.PvP, true);
-
                                 //Here in PVP the loser pays the winner money out of their account.
-                                eDeadPlayer.BankAccount.TransferToAsync(deadPlayer.LastPVPID, penaltyAmmount, options, string.Format("VX: PVP: {0} killed {1}", killer.TSPlayer.Name, deadPlayer.TSPlayer.Name));
+                                eDeadPlayer.BankAccount.TransferToAsync(deadPlayer.LastPVPID, penaltyAmmount, options, null, string.Format("VX: PVP: {0} killed {1}", killer.TSPlayer.Name, deadPlayer.TSPlayer.Name));
                             }
                         }
                     } else if (!deadPlayer.TSPlayer.Group.HasPermission("vault.bypass.death")) {
@@ -210,7 +227,7 @@ namespace Wolfje.Plugins.SEconomy.VaultExModule {
 
                        // deadPlayer.ChangeMoney(-penaltyAmmount, MoneyEventFlags.Death, true);
 
-                        SEconomyPlugin.WorldAccount.TransferToAsync(deadPlayer.Index, -penaltyAmmount, options, string.Format("VX: {0} died.", deadPlayer.TSPlayer.Name));
+                        SEconomyPlugin.WorldAccount.TransferToAsync(deadPlayer.Index, -penaltyAmmount, options, null, string.Format("VX: {0} died.", deadPlayer.TSPlayer.Name));
                     }
                 }
             } else if (e.MsgID == PacketTypes.PlayerDamage) {

@@ -6,7 +6,7 @@ using System.Text;
 using Newtonsoft.Json;
 
 namespace Wolfje.Plugins.SEconomy {
-    public class Configuration {
+    public class Config {
 
         public bool BankAccountsEnabled = true;
         public string StartingMoney = "0";
@@ -15,7 +15,7 @@ namespace Wolfje.Plugins.SEconomy {
         public int IdleThresholdMinutes = 10;
         public string IntervalPayAmount = "0";
         public static string BaseDirectory = @"tshock" + System.IO.Path.DirectorySeparatorChar + "SEconomy";
-        public static string JournalPath = Configuration.BaseDirectory + System.IO.Path.DirectorySeparatorChar + "SEconomy.journal.xml.gz";
+        public static string JournalPath = Config.BaseDirectory + System.IO.Path.DirectorySeparatorChar + "SEconomy.journal.xml.gz";
 
         public int JournalBackupMinutes = 1;
 
@@ -26,19 +26,19 @@ namespace Wolfje.Plugins.SEconomy {
         /// <summary>
         /// Loads a configuration file and deserializes it from JSON
         /// </summary>
-        public static Configuration LoadConfigurationFromFile(string Path) {
-            Configuration config = null;
+        public static Config LoadConfigurationFromFile(string Path) {
+            Config config = null;
 
             try {
                 string fileText = System.IO.File.ReadAllText(Path);
 
-                config = JsonConvert.DeserializeObject<Configuration>(fileText);
+                config = JsonConvert.DeserializeObject<Config>(fileText);
 
             } catch (Exception ex) {
                 if (ex is System.IO.FileNotFoundException || ex is System.IO.DirectoryNotFoundException) {
                     TShockAPI.Log.ConsoleError("seconomy configuration: Cannot find file or directory. Creating new one.");
 
-                    config = Configuration.NewSampleConfiguration();
+                    config = Config.NewSampleConfiguration();
 
                     config.SaveConfiguration(Path);
 
@@ -52,8 +52,8 @@ namespace Wolfje.Plugins.SEconomy {
             return config;
         }
 
-        public static Configuration NewSampleConfiguration() {
-            Configuration newConfig = new Configuration();
+        public static Config NewSampleConfiguration() {
+            Config newConfig = new Config();
 
             return newConfig;
         }
@@ -65,12 +65,12 @@ namespace Wolfje.Plugins.SEconomy {
             } catch (Exception ex) {
 
                 if (ex is System.IO.DirectoryNotFoundException) {
-                    TShockAPI.Log.ConsoleError("vault config: save directory not found: " + Path);
+                    TShockAPI.Log.ConsoleError("seconomy config: save directory not found: " + Path);
 
                 } else if (ex is UnauthorizedAccessException || ex is System.Security.SecurityException) {
-                    TShockAPI.Log.ConsoleError("vault config: Access is denied to Vault config: " + Path);
+                    TShockAPI.Log.ConsoleError("seconomy config: Access is denied to Vault config: " + Path);
                 } else {
-                    TShockAPI.Log.ConsoleError("vault config: Error reading file: " + Path);
+                    TShockAPI.Log.ConsoleError("seconomy config: Error reading file: " + Path);
                     throw;
                 }
             }

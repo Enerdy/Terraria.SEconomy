@@ -24,6 +24,16 @@ create_alias("cursed", "0c", 0, "superadmin", function(player, parameters) {
 
 });
 
+
+create_alias("stars", "0c", 0, "superadmin", function(player, parameters) {
+
+	for (i = 0; i <= 20; i++) {
+		execute_command(player, "/i 75");
+	}
+
+});
+
+
 create_alias("makeadmin", "0c", 0, "", function(player, parameters) {
 	
 	if ( player.Group.Name != "superadmin" ) {

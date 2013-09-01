@@ -464,7 +464,7 @@ A Transaction has these following attributes:
                     XmlJournal.Element("Journal").Attribute("Schema").SetValue(NewVersion.ToString());
                 }
 
-                SaveXml(Configuration.JournalPath);
+                SaveXml(Config.JournalPath);
             }
 
             if (runningVersion != null && runningVersion != new Version(1, 2, 0)) {
@@ -477,7 +477,7 @@ A Transaction has these following attributes:
                     XmlJournal.Element("Journal").Attribute("Schema").SetValue(NewVersion.ToString());
                 }
 
-                SaveXml(Configuration.JournalPath);
+                SaveXml(Config.JournalPath);
             }
 
         }
@@ -489,7 +489,7 @@ A Transaction has these following attributes:
             TShockAPI.Log.ConsoleInfo("seconomy journal: backing up transaction journal.");
             Guid p = SEconomyPlugin.Profiler.Enter("xml backup");
 
-            Journal.TransactionJournal.SaveXmlAsync(Configuration.JournalPath).ContinueWith((task) => {
+            Journal.TransactionJournal.SaveXmlAsync(Config.JournalPath).ContinueWith((task) => {
                 SEconomyPlugin.Profiler.ExitLog(p);
             });
         }
@@ -499,7 +499,6 @@ A Transaction has these following attributes:
         /// </summary>
         public static void SquashJournal() {
             int bankAccountCount = BankAccounts.Count();
-            int tranCount = Transactions.Count();
             XDocument newJournal = NewJournal();
 
             bool responsibleForTurningBackupsBackOn = false;
@@ -550,7 +549,7 @@ A Transaction has these following attributes:
                 }
             }
 
-            SaveXml(Configuration.JournalPath);
+            SaveXml(Config.JournalPath);
 
             //the backups could already have been disabled by something else.  We don't want to be the ones turning it back on
             if (responsibleForTurningBackupsBackOn) {

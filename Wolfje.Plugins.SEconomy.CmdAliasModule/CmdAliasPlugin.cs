@@ -346,7 +346,7 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule {
                                 } else if (ePlayer.BankAccount.Balance >= commandCost) {
 
                                     //Take money off the player, and indicate that this is a payment for something tangible.
-                                    Journal.BankTransferEventArgs trans = SEconomyPlugin.WorldAccount.TransferTo(ePlayer.BankAccount, -commandCost, Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.IsPayment, Message: string.Format("AC: {0} cmd {1}", ePlayer.TSPlayer.Name, alias.CommandAlias));
+                                    Journal.BankTransferEventArgs trans = ePlayer.BankAccount.TransferTo(SEconomyPlugin.WorldAccount, commandCost, Journal.BankAccountTransferOptions.AnnounceToSender | Journal.BankAccountTransferOptions.IsPayment, "", string.Format("AC: {0} cmd {1}", ePlayer.TSPlayer.Name, alias.CommandAlias));
                                     if (trans.TransferSucceeded) {
                                         //DoCommands(alias, ePlayer.TSPlayer, e.Parameters);
                                         CallJSFunction(alias.func, ePlayer.TSPlayer, e.Parameters);
@@ -397,7 +397,7 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule {
                         Money commandCost = 0;
                         Economy.EconomyPlayer ePlayer = SEconomyPlugin.GetEconomyPlayerSafe(e.Player.Index);
 
-                        if (!string.IsNullOrEmpty(alias.Cost) && Money.TryParse(alias.Cost, out commandCost) && !e.Player.Group.HasPermission("aliascmd.bypasscost")) {
+                        if (!string.IsNullOrEmpty(alias.Cost) && Money.TryParse(alias.Cost, out commandCost) && commandCost > 0 && !e.Player.Group.HasPermission("aliascmd.bypasscost")) {
                             if (ePlayer.BankAccount != null) {
 
                                 if (!ePlayer.BankAccount.IsAccountEnabled) {
@@ -405,14 +405,14 @@ namespace Wolfje.Plugins.SEconomy.CmdAliasModule {
                                 } else if (ePlayer.BankAccount.Balance >= commandCost) {
 
                                     //Take money off the player, and indicate that this is a payment for something tangible.
-                                    Journal.BankTransferEventArgs trans = SEconomyPlugin.WorldAccount.TransferTo(ePlayer.BankAccount, -commandCost, Journal.BankAccountTransferOptions.AnnounceToReceiver | Journal.BankAccountTransferOptions.IsPayment, Message: string.Format("AC: {0} cmd {1}", ePlayer.TSPlayer.Name, alias.CommandAlias));
+                                    Journal.BankTransferEventArgs trans = ePlayer.BankAccount.TransferTo(SEconomyPlugin.WorldAccount, commandCost, Journal.BankAccountTransferOptions.AnnounceToSender | Journal.BankAccountTransferOptions.IsPayment, "", string.Format("AC: {0} cmd {1}", ePlayer.TSPlayer.Name, alias.CommandAlias));
                                     if (trans.TransferSucceeded) {
                                         DoCommands(alias, ePlayer.TSPlayer, e.Parameters);
                                     } else {
                                         e.Player.SendErrorMessageFormat("Your payment failed.");
                                     }
                                 } else {
-                                    e.Player.SendErrorMessageFormat("This command costs {0}. You need {1} more to be able to use this.", commandCost.ToLongString(), ((Money)(ePlayer.BankAccount.Balance - commandCost)).ToLongString());
+                                    e.Player.SendErrorMessageFormat("This command costs {0}. You need {1} more to be able to use this.", commandCost.ToLongString(), ((Money)(commandCost - ePlayer.BankAccount.Balance)).ToLongString());
                                 }
                             } else {
                                 e.Player.SendErrorMessageFormat("This command costs money and you don't have a bank account.  Please log in first.");

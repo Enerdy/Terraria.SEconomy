@@ -24,8 +24,8 @@ namespace Wolfje.Plugins.SEconomy {
         internal static readonly Performance.Profiler Profiler = new Performance.Profiler();
         static List<Economy.EconomyPlayer> economyPlayers;
         static Journal.XBankAccount _worldBankAccount;
-      
-        public static Configuration Configuration { get; private set; }
+
+        public static Config Configuration { get; private set; }
 
         static System.Timers.Timer PayRunTimer { get; set; }
         static System.Timers.Timer JournalBackupTimer { get; set; }
@@ -77,8 +77,8 @@ namespace Wolfje.Plugins.SEconomy {
             : base(Game) {
             Order = 20000;
 
-            if (!System.IO.Directory.Exists(Configuration.BaseDirectory)) {
-                System.IO.Directory.CreateDirectory(Configuration.BaseDirectory);
+            if (!System.IO.Directory.Exists(Config.BaseDirectory)) {
+                System.IO.Directory.CreateDirectory(Config.BaseDirectory);
             }
              
             economyPlayers = new List<Economy.EconomyPlayer>();
@@ -102,7 +102,7 @@ namespace Wolfje.Plugins.SEconomy {
             lock (Journal.TransactionJournal.__staticLock) {
                 if (Journal.TransactionJournal.XmlJournal != null) {
                     Console.WriteLine("seconomy journal: emergency flushing journal to disk.");
-                    Journal.TransactionJournal.SaveXml(Configuration.JournalPath);
+                    Journal.TransactionJournal.SaveXml(Config.JournalPath);
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace Wolfje.Plugins.SEconomy {
                 Hooks.GameHooks.PostInitialize -= GameHooks_PostInitialize;
 
                 Console.WriteLine("seconomy journal: emergency flushing journal to disk.");
-                Journal.TransactionJournal.SaveXml(Configuration.JournalPath);
+                Journal.TransactionJournal.SaveXml(Config.JournalPath);
 
                 economyPlayers = null;
 
@@ -139,10 +139,10 @@ namespace Wolfje.Plugins.SEconomy {
         /// Initialization point for the Terrraria API
         /// </summary>
         public override void Initialize() {
-            Configuration = Configuration.LoadConfigurationFromFile(Configuration.BaseDirectory + System.IO.Path.DirectorySeparatorChar + "SEconomy.config.json");
+            Configuration = Config.LoadConfigurationFromFile(Config.BaseDirectory + System.IO.Path.DirectorySeparatorChar + "SEconomy.config.json");
 
             try {
-                Journal.TransactionJournal.LoadFromXmlFile(Configuration.JournalPath);
+                Journal.TransactionJournal.LoadFromXmlFile(Config.JournalPath);
             } catch {
                 TShockAPI.Log.ConsoleError("SEconomy: xml initialization failed.");
                 throw;
@@ -158,10 +158,6 @@ namespace Wolfje.Plugins.SEconomy {
 
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
         }
-
-    
-
-        
 
         #region "Event Handlers"
 
@@ -218,7 +214,11 @@ namespace Wolfje.Plugins.SEconomy {
                 PayRunTimer.Start();
             }
 
+
             WorldAccount = Journal.TransactionJournal.EnsureWorldAccountExists();
+            
+            WorldEconomy.WorldEconomy.InitializeWorldEconomy();
+            Journal.TransactionJournal.InitializeTransactionCache();
 
             SEconomyPlugin.BackupCanRun = true;
         }
@@ -272,38 +272,31 @@ namespace Wolfje.Plugins.SEconomy {
                         //P2P transfers, both the sender and the reciever get notified.
                     } else if ((e.TransferOptions & Journal.BankAccountTransferOptions.IsPlayerToPlayerTransfer) == Journal.BankAccountTransferOptions.IsPlayerToPlayerTransfer) {
                         if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToReceiver) == Journal.BankAccountTransferOptions.AnnounceToReceiver && e.ReceiverAccount != null && e.ReceiverAccount.Owner != null) {
-                            e.ReceiverAccount.Owner.TSPlayer.SendMessage(string.Format("You received {0} from {1}. Transaction # {2}", e.Amount.ToLongString(), e.SenderAccount.Owner != null ? e.SenderAccount.Owner.TSPlayer.Name : "The server", e.TransactionID), Color.Orange);
+                            e.ReceiverAccount.Owner.TSPlayer.SendMessage(string.Format("You {3} {0} from {1}. Transaction # {2}", e.Amount.ToLongString(), e.SenderAccount.Owner != null ? e.SenderAccount.Owner.TSPlayer.Name : "The server", e.TransactionID, e.Amount > 0 ? "received" : "sent"), Color.Orange);
                         }
                         if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToSender) == Journal.BankAccountTransferOptions.AnnounceToSender && e.SenderAccount.Owner != null) {
-                            e.SenderAccount.Owner.TSPlayer.SendMessage(string.Format("You sent {0} to {1}. Transaction # {2}", e.Amount.ToLongString(), e.ReceiverAccount.Owner.TSPlayer.Name, e.TransactionID), Color.Orange);
+                            e.SenderAccount.Owner.TSPlayer.SendMessage(string.Format("You {3} {0} to {1}. Transaction # {2}", e.Amount.ToLongString(), e.ReceiverAccount.Owner.TSPlayer.Name, e.TransactionID, e.Amount > 0 ? "sent" : "received"), Color.Orange);
                         }
 
                         //Everything else, including world to player, and player to world.
                     } else {
-                        string moneyVerb = "";
 
-                        if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToSender) == Journal.BankAccountTransferOptions.AnnounceToSender && e.SenderAccount.Owner != null) {
-
-                            if ((e.TransferOptions & Journal.BankAccountTransferOptions.IsPayment) == Journal.BankAccountTransferOptions.IsPayment) {
-                                moneyVerb = "paid";
-                            } else if (e.Amount > 0) {
-                                moneyVerb = "gained";
-                            } else {
-                                moneyVerb = "lost";
+                        if ((e.TransferOptions & Journal.BankAccountTransferOptions.IsPayment) == Journal.BankAccountTransferOptions.IsPayment) {
+                            if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToSender) == Journal.BankAccountTransferOptions.AnnounceToSender && e.SenderAccount.Owner != null) {
+                                e.SenderAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}{2}", e.Amount > 0 ? "got paid" : "paid", e.Amount.ToLongString(), !string.IsNullOrEmpty(e.TransactionMessage) ? " for " + e.TransactionMessage : ""), Color.Orange);
                             }
 
-                            e.SenderAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}", moneyVerb, e.Amount.ToLongString()), Color.Orange);
-                        }
-                        if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToReceiver) == Journal.BankAccountTransferOptions.AnnounceToReceiver && e.ReceiverAccount.Owner != null) {
-                            if ((e.TransferOptions & Journal.BankAccountTransferOptions.IsPayment) == Journal.BankAccountTransferOptions.IsPayment) {
-                                moneyVerb = "got paid";
-                            } else if (e.Amount > 0) {
-                                moneyVerb = "gained";
-                            } else {
-                                moneyVerb = "lost";
+                            if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToReceiver) == Journal.BankAccountTransferOptions.AnnounceToReceiver && e.ReceiverAccount.Owner != null) {
+                                e.ReceiverAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}{2}", e.Amount > 0 ? "got paid" : "paid", e.Amount.ToLongString(), !string.IsNullOrEmpty(e.TransactionMessage) ? " for " + e.TransactionMessage : ""), Color.Orange);
+                            }
+                        } else {
+                            if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToSender) == Journal.BankAccountTransferOptions.AnnounceToSender && e.SenderAccount.Owner != null) {
+                                e.SenderAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}{2}", e.Amount > 0 ? "lost" : "gained", e.Amount.ToLongString(), !string.IsNullOrEmpty(e.TransactionMessage) ? " for " + e.TransactionMessage : ""), Color.Orange);
                             }
 
-                            e.ReceiverAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}", moneyVerb, e.Amount.ToLongString()), Color.Orange);
+                            if ((e.TransferOptions & Journal.BankAccountTransferOptions.AnnounceToReceiver) == Journal.BankAccountTransferOptions.AnnounceToReceiver && e.ReceiverAccount.Owner != null) {
+                                e.ReceiverAccount.Owner.TSPlayer.SendMessage(string.Format("You {0} {1}{2}", e.Amount > 0 ? "gained" : "lost", e.Amount.ToLongString(), !string.IsNullOrEmpty(e.TransactionMessage) ? " for " + e.TransactionMessage : ""), Color.Orange);
+                            }
                         }
                     }
                 } else if (e.TransferSucceeded) {
@@ -333,7 +326,6 @@ namespace Wolfje.Plugins.SEconomy {
                     player.TSPlayer.SendInfoMessageFormat("bank: {1} {0}d your account.", enabled ? "enable" : "disable", caller.Name);
                 }
             }
-
         }
 
         /// <summary>
@@ -363,8 +355,7 @@ namespace Wolfje.Plugins.SEconomy {
                 if (player.TSPlayer.Group is TShockAPI.SuperAdminGroup) {
                     //player.LoadBankAccountByPlayerNameAsync();
                 }
-            }
-            
+            }   
         }
 
         /// <summary>
@@ -392,7 +383,7 @@ namespace Wolfje.Plugins.SEconomy {
                                 //then the player is considered not AFK.
                                 if (ep.TimeSinceIdle.TotalMinutes <= Configuration.IdleThresholdMinutes && ep.BankAccount != null) {
                                     //Pay them from the world account
-                                    WorldAccount.TransferToAsync(ep.BankAccount, payAmount, Journal.BankAccountTransferOptions.AnnounceToReceiver);
+                                    WorldAccount.TransferToAsync(ep.BankAccount, payAmount, Journal.BankAccountTransferOptions.AnnounceToReceiver, null, null);
                                 }
                             }
                         }
@@ -445,8 +436,6 @@ namespace Wolfje.Plugins.SEconomy {
                 }
             }
 
-          
-
             return p;
         }
 
@@ -470,9 +459,6 @@ namespace Wolfje.Plugins.SEconomy {
         }
 
 
-        #endregion
-
-
         /// <summary>
         /// Reflects on a private method.  Can remove this if TShock opens up a bit more of their API publicly
         /// </summary>
@@ -480,7 +466,8 @@ namespace Wolfje.Plugins.SEconomy {
             BindingFlags flags = BindingFlags.NonPublic;
             if (StaticMember) {
                 flags |= BindingFlags.Static;
-            } else {
+            }
+            else {
                 flags |= BindingFlags.Instance;
             }
             MethodInfo method = type.GetMethod(Name, flags);
@@ -510,6 +497,8 @@ namespace Wolfje.Plugins.SEconomy {
             Input = sb.ToString();
         }
 
+
+        #endregion
 
     }
 }
